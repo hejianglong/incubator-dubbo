@@ -16,6 +16,9 @@
  */
 package com.alibaba.dubbo.demo.consumer;
 
+import com.alibaba.dubbo.config.ApplicationConfig;
+import com.alibaba.dubbo.config.ProtocolConfig;
+import com.alibaba.dubbo.config.RegistryConfig;
 import com.alibaba.dubbo.demo.DemoService;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -24,11 +27,11 @@ public class Consumer {
     public static void main(String[] args) {
         //Prevent to get IPV6 address,this way only work in debug mode
         //But you can pass use -Djava.net.preferIPv4Stack=true,then it work well whether in debug mode or not
-        System.setProperty("java.net.preferIPv4Stack", "true");
+       /* System.setProperty("java.net.preferIPv4Stack", "true");
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"META-INF/spring/dubbo-demo-consumer.xml"});
         context.start();
         DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
-        String hello = demoService.sayHello("world"); // call remote method
+        String hello = demoService.sayHello("world"); // call remote method*/
 
 /*        while (true) {
             try {
@@ -40,6 +43,6 @@ public class Consumer {
                 throwable.printStackTrace();
             }
         }*/
-
     }
+
 }

@@ -219,9 +219,11 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     }
 
     protected synchronized void doExport() {
+        // 标记是否可以暴露，如果可以这标记 exported = true 已经暴露
         if (unexported) {
             throw new IllegalStateException("Already unexported!");
         }
+        // 若已经暴露这返回
         if (exported) {
             return;
         }
@@ -229,6 +231,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (interfaceName == null || interfaceName.length() == 0) {
             throw new IllegalStateException("<dubbo:service interface=\"\" /> interface not allow null!");
         }
+        // 拼接属性配置（环境变量 + properties 属性）到 ProviderConfig 对象
         checkDefault();
         if (provider != null) {
             if (application == null) {
@@ -263,6 +266,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 monitor = application.getMonitor();
             }
         }
+        // 如果是泛化接口的实现
         if (ref instanceof GenericService) {
             interfaceClass = GenericService.class;
             if (StringUtils.isEmpty(generic)) {
@@ -279,6 +283,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             checkRef();
             generic = Boolean.FALSE.toString();
         }
+        // 处理服务接口客户端本地代理( `local` )相关。实际目前已经废弃，使用 `stub` 属性
         if (local != null) {
             if ("true".equals(local)) {
                 local = interfaceName + "Local";
@@ -293,6 +298,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 throw new IllegalStateException("The local implementation class " + localClass.getName() + " not implement interface " + interfaceName);
             }
         }
+        // 处理服务接口客户端本地代理 stub 相关
         if (stub != null) {
             if ("true".equals(stub)) {
                 stub = interfaceName + "Stub";
@@ -444,6 +450,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put("revision", revision);
             }
 
+            // 活动接口里面有哪些方法并进行设置到 map 中
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("NO method found in service interface " + interfaceClass.getName());
@@ -452,6 +459,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
+        // token，令牌验证
         if (!ConfigUtils.isEmpty(token)) {
             if (ConfigUtils.isDefault(token)) {
                 map.put(Constants.TOKEN_KEY, UUID.randomUUID().toString());
@@ -459,6 +467,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(Constants.TOKEN_KEY, token);
             }
         }
+        // 协议为 injvm 时，不注册，不通知
         if (Constants.LOCAL_PROTOCOL.equals(protocolConfig.getName())) {
             protocolConfig.setRegister(false);
             map.put("notify", "false");
@@ -473,12 +482,14 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
         URL url = new URL(name, host, port, (contextPath == null || contextPath.length() == 0 ? "" : contextPath + "/") + path, map);
 
+        // 配置规则
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                     .getExtension(url.getProtocol()).getConfigurator(url).configure(url);
         }
 
+        // 服务暴露逻辑 TODO - hejianglong
         String scope = url.getParameter(Constants.SCOPE_KEY);
         // don't export when none is configured
         if (!Constants.SCOPE_NONE.toString().equalsIgnoreCase(scope)) {
