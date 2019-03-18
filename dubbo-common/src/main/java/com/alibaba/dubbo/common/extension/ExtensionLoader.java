@@ -68,29 +68,111 @@ public class ExtensionLoader<T> {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
+    /**
+     * 拓展加载器集合
+     *
+     * key：拓展接口
+     */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
 
+    /**
+     * 拓展实现类集合
+     *
+     * key：拓展实现类
+     *
+     */
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<Class<?>, Object>();
 
     // ==============================
 
+    /**
+     * 拓展接口
+     * 例如，Protocol
+     */
     private final Class<?> type;
 
+    /**
+     * 对象工厂
+     * 用于调用 {@link #injectExtension(Object)} 方法，向拓展对象注入依赖属性
+     *  例如，StubProxyFactoryWrapper 中有 `Protocol protocol` 属性
+     */
     private final ExtensionFactory objectFactory;
 
+    /**
+     * 缓存的拓展名与拓展类的映射
+     *
+     * 和 {@link #cachedClasses} 的 KV 对调
+     *
+     * 通过 {@link #loadExtensionClasses()} 加载
+     */
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<Class<?>, String>();
 
+    /**
+     * 缓存的拓展实现类集合
+     *
+     * 不包含如下两种类型
+     * 1. 自适应拓展实现类，例如 AdaptiveExtensionFactory
+     * 2. 带唯一参数为拓展接口的构造方法的实现类，或者说拓展 Wraper 实现类，例如，ProtocolFilterWrapper
+     * 拓展 Wrapper 实现类，会添加到 {@link #cachedWrapperClasses}
+     *
+     * 通过 {@link #loadExtensionClasses()}
+     */
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<Map<String, Class<?>>>();
 
+    /**
+     * 拓展名与 @Activate 的映射
+     * 例如，AccessLogFilter
+     * 用于 {@link #getActivateExtension(URL, String)}
+     */
     private final Map<String, Activate> cachedActivates = new ConcurrentHashMap<String, Activate>();
+
+    /**
+     * 缓存的拓展对象集合
+     * key：拓展名
+     * value: 拓展对象
+     * 例如，Protocol 拓展
+     *      key：dubbo value：DubboProtocol
+     *      key：injvm value：InjvmProtocol
+     *
+     * 通过 {@link #loadExtensionClasses()} 加载
+     */
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<String, Holder<Object>>();
+
+    /**
+     * 缓存的自适应( Adaptive ) 拓展对象
+     */
     private final Holder<Object> cachedAdaptiveInstance = new Holder<Object>();
     private volatile Class<?> cachedAdaptiveClass = null;
+
+    /**
+     * 缓存的默认拓展名
+     *
+     * 通过 {@link SPI} 注解获得
+     */
     private String cachedDefaultName;
+
+    /**
+     * 创建 {@link #cachedAdaptiveInstance} 是发送的异常
+     * 发送异常后，不再创建
+     */
     private volatile Throwable createAdaptiveInstanceError;
 
+    /**
+     * 拓展 Wrapper 实现类集合
+     *
+     * 带唯一参数为拓展接口的构造方法的实现类
+     *
+     * 通过 {@link #loadExtensionClasses()} 加载
+     */
     private Set<Class<?>> cachedWrapperClasses;
 
+    /**
+     * 拓展名与加载对应拓展类发生的异常的映射
+     * key：拓展名
+     * value：异常
+     *
+     * 在 {@link #loadFile(Map, String)} 时，记录
+     */
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<String, IllegalStateException>();
 
     private ExtensionLoader(Class<?> type) {
@@ -558,6 +640,7 @@ public class ExtensionLoader<T> {
             synchronized (cachedClasses) {
                 classes = cachedClasses.get();
                 if (classes == null) {
+                    // 从配置文件中加载拓展实现类数组
                     classes = loadExtensionClasses();
                     cachedClasses.set(classes);
                 }
@@ -581,6 +664,7 @@ public class ExtensionLoader<T> {
             }
         }
 
+        // 从配置文件中加载拓展实现数组
         Map<String, Class<?>> extensionClasses = new HashMap<String, Class<?>>();
         loadDirectory(extensionClasses, DUBBO_INTERNAL_DIRECTORY);
         loadDirectory(extensionClasses, DUBBO_DIRECTORY);

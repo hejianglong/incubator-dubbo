@@ -132,25 +132,32 @@ public class RegistryProtocol implements Protocol {
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
         //export invoker
+        // 暴露服务，本地一启动服务，但是不包括注册中心注册服务的意思
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker);
 
         URL registryUrl = getRegistryUrl(originInvoker);
 
         //registry provider
         final Registry registry = getRegistry(originInvoker);
+        // 活动服务提供者的 url
         final URL registeredProviderUrl = getRegisteredProviderUrl(originInvoker);
 
         //to judge to delay publish whether or not
+        // 服务提供者是否注册到配置中心
         boolean register = registeredProviderUrl.getParameter("register", true);
 
+        // 向本地注册表，注册服务提供者（自己）
         ProviderConsumerRegTable.registerProvider(originInvoker, registryUrl, registeredProviderUrl);
 
+        // 想注册中心注册服务提供者（自己）
         if (register) {
             register(registryUrl, registeredProviderUrl);
+            // 标示本地注册表的注册服务提供者已经注册
             ProviderConsumerRegTable.getProviderWrapper(originInvoker).setReg(true);
         }
 
         // Subscribe the override data
+        // 使用 OverrideListener 对象，订阅配置规则
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call the same service. Because the subscribed is cached key with the name of the service, it causes the subscription information to cover.
         final URL overrideSubscribeUrl = getSubscribedOverrideUrl(registeredProviderUrl);
         final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
@@ -223,8 +230,10 @@ public class RegistryProtocol implements Protocol {
      * @return
      */
     private URL getRegisteredProviderUrl(final Invoker<?> originInvoker) {
+        // 从注册中心的 export 参数中，获得服务提供者的 URL
         URL providerUrl = getProviderUrl(originInvoker);
-        //The address you see at the registry
+        // The address you see at the registry
+        // 移除一些不需要的参数
         return providerUrl.removeParameters(getFilteredKeys(providerUrl))
                 .removeParameter(Constants.MONITOR_KEY)
                 .removeParameter(Constants.BIND_IP_KEY)
@@ -441,7 +450,14 @@ public class RegistryProtocol implements Protocol {
      */
     private class ExporterChangeableWrapper<T> implements Exporter<T> {
 
+        /**
+         * 原 Invoker 对象
+         */
         private final Invoker<T> originInvoker;
+
+        /**
+         * 暴露的 Exporter 对象
+         */
         private Exporter<T> exporter;
 
         public ExporterChangeableWrapper(Exporter<T> exporter, Invoker<T> originInvoker) {
@@ -465,7 +481,9 @@ public class RegistryProtocol implements Protocol {
         @Override
         public void unexport() {
             String key = getCacheKey(this.originInvoker);
+            // 移除出 `bounds`
             bounds.remove(key);
+            // 取消暴露
             exporter.unexport();
         }
     }

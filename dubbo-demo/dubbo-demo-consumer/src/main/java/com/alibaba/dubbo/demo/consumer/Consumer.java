@@ -18,8 +18,11 @@ package com.alibaba.dubbo.demo.consumer;
 
 import com.alibaba.dubbo.config.ApplicationConfig;
 import com.alibaba.dubbo.config.ProtocolConfig;
+import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
+import com.alibaba.dubbo.config.spring.context.annotation.EnableDubbo;
 import com.alibaba.dubbo.demo.DemoService;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class Consumer {
@@ -43,6 +46,22 @@ public class Consumer {
                 throwable.printStackTrace();
             }
         }*/
+        // testConsumer();
     }
 
+    private static void testConsumer() {
+        ApplicationConfig application = new ApplicationConfig();
+        application.setName("consumer");
+
+        RegistryConfig registryConfig = new RegistryConfig();
+        registryConfig.setAddress("zookeeper://127.0.0.1:2181");
+
+        ReferenceConfig<DemoService> reference = new ReferenceConfig<DemoService>();
+        reference.setApplication(application);
+        reference.setRegistry(registryConfig);
+        reference.setInterface(DemoService.class);
+
+        DemoService demoService = reference.get();
+        System.out.println(demoService.sayHello("out ..."));
+    }
 }

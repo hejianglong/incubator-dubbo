@@ -357,7 +357,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         }
         map.put(Constants.REGISTER_IP_KEY, hostToRegistry);
 
-        //attributes are stored by system context.
+        // attributes are stored by system context.
         // 添加到 StaticContext 进行缓存
         // 目的是事件通知
         StaticContext.getSystemContext().putAll(attributes);
