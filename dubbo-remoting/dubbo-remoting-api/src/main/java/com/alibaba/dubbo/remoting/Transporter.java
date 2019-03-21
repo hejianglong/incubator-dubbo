@@ -22,6 +22,8 @@ import com.alibaba.dubbo.common.extension.Adaptive;
 import com.alibaba.dubbo.common.extension.SPI;
 
 /**
+ * 默认选用 netty 协议
+ * 此处为 netty3
  * Transporter. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Transport_Layer">Transport Layer</a>
@@ -35,6 +37,7 @@ public interface Transporter {
     /**
      * Bind a server.
      *
+     * SPI 拓展机制使用 URL.server 货 URL.transporter
      * @param url     server url
      * @param handler
      * @return server

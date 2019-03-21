@@ -13,6 +13,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * 多消息处理器，处理一次性接收到多条消息的情况
  */
 package com.alibaba.dubbo.remoting.transport;
 

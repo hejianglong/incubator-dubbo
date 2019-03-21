@@ -46,7 +46,7 @@ public class Consumer {
                 throwable.printStackTrace();
             }
         }*/
-        // testConsumer();
+        testConsumer();
     }
 
     private static void testConsumer() {

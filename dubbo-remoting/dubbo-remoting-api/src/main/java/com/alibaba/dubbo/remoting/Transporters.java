@@ -53,6 +53,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
+        // 根据 url 参数获得 Transporter 实现对象
         return getTransporter().bind(url, handler);
     }
 

@@ -26,6 +26,14 @@ import java.io.IOException;
 @SPI
 public interface Codec2 {
 
+    /**
+     * 编码
+     * 使用 URL.code 属性
+     * @param channel
+     * @param buffer
+     * @param message
+     * @throws IOException
+     */
     @Adaptive({Constants.CODEC_KEY})
     void encode(Channel channel, ChannelBuffer buffer, Object message) throws IOException;
 

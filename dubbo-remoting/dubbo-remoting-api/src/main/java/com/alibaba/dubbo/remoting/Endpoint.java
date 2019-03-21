@@ -61,7 +61,8 @@ public interface Endpoint {
 
     /**
      * send message.
-     *
+     * true 等待消息发出，消息发送失败将抛出异常
+     * false 不等待消息发出，将消息放入 IO 队列，即刻返回
      * @param message
      * @param sent    already sent to socket?
      */
