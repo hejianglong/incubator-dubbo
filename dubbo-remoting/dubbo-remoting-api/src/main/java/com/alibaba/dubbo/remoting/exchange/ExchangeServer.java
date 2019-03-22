@@ -28,7 +28,7 @@ public interface ExchangeServer extends Server {
 
     /**
      * get channels.
-     *
+     * 获得通道数组
      * @return channels
      */
     Collection<ExchangeChannel> getExchangeChannels();

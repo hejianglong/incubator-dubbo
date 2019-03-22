@@ -13,6 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 基于消息头部的信息交换通道实现类
  */
 package com.alibaba.dubbo.remoting.exchange.support.header;
 
@@ -53,6 +54,14 @@ final class HeaderExchangeChannel implements ExchangeChannel {
         this.channel = channel;
     }
 
+    /**
+     * 传入的 ch 属性，实际就是 HeaderExchangeChannel 属性
+     * 通过 ch.attribute 的 CHANNEL_KEY 键值，保证有且仅有为 ch 属性
+     * 创建唯一的 HeaderExchangeChannel 对象
+     * 要求已经连接
+     * @param ch
+     * @return
+     */
     static HeaderExchangeChannel getOrAddChannel(Channel ch) {
         if (ch == null) {
             return null;
@@ -103,13 +112,14 @@ final class HeaderExchangeChannel implements ExchangeChannel {
 
     @Override
     public ResponseFuture request(Object request, int timeout) throws RemotingException {
+        // 如果已经关闭，不再允许发起新的请求
         if (closed) {
             throw new RemotingException(this.getLocalAddress(), null, "Failed to send request " + request + ", cause: The channel " + this + " is closed!");
         }
         // create request.
         Request req = new Request();
         req.setVersion(Version.getProtocolVersion());
-        req.setTwoWay(true);
+        req.setTwoWay(true); // 需要响应
         req.setData(request);
         DefaultFuture future = new DefaultFuture(channel, req, timeout);
         try {
@@ -142,6 +152,7 @@ final class HeaderExchangeChannel implements ExchangeChannel {
             return;
         }
         closed = true;
+        // 等待请求完成
         if (timeout > 0) {
             long start = System.currentTimeMillis();
             while (DefaultFuture.hasFuture(channel)

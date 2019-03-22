@@ -25,22 +25,31 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class Request {
 
+    // 事件，心跳
     public static final String HEARTBEAT_EVENT = null;
 
+    // 只读事件
     public static final String READONLY_EVENT = "R";
 
+    // 请求编号自增系列
     private static final AtomicLong INVOKE_ID = new AtomicLong(0);
 
+    // 请求编号
     private final long mId;
 
+    // dubbo 版本
     private String mVersion;
 
+    // 是否需要响应，默认需要
     private boolean mTwoWay = true;
 
+    // 是否是事件，比如心跳时间
     private boolean mEvent = false;
 
+    // 是否异常请求，在消息解析的时候会出现
     private boolean mBroken = false;
 
+    // 数据
     private Object mData;
 
     public Request() {

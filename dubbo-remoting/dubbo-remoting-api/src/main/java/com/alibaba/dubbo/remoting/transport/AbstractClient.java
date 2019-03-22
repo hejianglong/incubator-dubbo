@@ -45,6 +45,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * AbstractClient
+ *
  */
 public abstract class AbstractClient extends AbstractEndpoint implements Client {
 

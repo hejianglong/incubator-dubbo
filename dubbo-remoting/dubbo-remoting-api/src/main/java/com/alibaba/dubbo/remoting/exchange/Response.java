@@ -80,16 +80,22 @@ public class Response {
      */
     public static final byte SERVER_THREADPOOL_EXHAUSTED_ERROR = 100;
 
+    // 响应编号
     private long mId = 0;
 
+    // 版本
     private String mVersion;
 
+    // 状态
     private byte mStatus = OK;
 
+    // 是否是事件
     private boolean mEvent = false;
 
+    // 错误消息
     private String mErrorMsg;
 
+    //
     private Object mResult;
 
     public Response() {
