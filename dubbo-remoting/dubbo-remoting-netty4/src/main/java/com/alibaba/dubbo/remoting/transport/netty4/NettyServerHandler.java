@@ -60,8 +60,10 @@ public class NettyServerHandler extends ChannelDuplexHandler {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.fireChannelActive();
 
+        // 创建 nettyChannel 对象
         NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
         try {
+            // 添加到 channels
             if (channel != null) {
                 channels.put(NetUtils.toAddressString((InetSocketAddress) ctx.channel().remoteAddress()), channel);
             }

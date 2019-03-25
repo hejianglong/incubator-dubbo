@@ -34,15 +34,18 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * NettyChannel.
+ * 封装了 netty channel 的实现类
  */
 final class NettyChannel extends AbstractChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyChannel.class);
 
+    // 通道集合
     private static final ConcurrentMap<Channel, NettyChannel> channelMap = new ConcurrentHashMap<Channel, NettyChannel>();
 
     private final Channel channel;
 
+    // 属性集合
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
     private NettyChannel(Channel channel, URL url, ChannelHandler handler) {
@@ -93,16 +96,20 @@ final class NettyChannel extends AbstractChannel {
 
     @Override
     public void send(Object message, boolean sent) throws RemotingException {
+        // 检查连接状态
         super.send(message, sent);
 
         boolean success = true;
         int timeout = 0;
         try {
+            // 发送消息
             ChannelFuture future = channel.writeAndFlush(message);
+            // 等待发送成功
             if (sent) {
                 timeout = getUrl().getPositiveParameter(Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
                 success = future.await(timeout);
             }
+            // 如果发生异常抛出
             Throwable cause = future.cause();
             if (cause != null) {
                 throw cause;
@@ -111,6 +118,7 @@ final class NettyChannel extends AbstractChannel {
             throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress() + ", cause: " + e.getMessage(), e);
         }
 
+        // 发送失败抛出异常
         if (!success) {
             throw new RemotingException(this, "Failed to send message " + message + " to " + getRemoteAddress()
                     + "in timeout(" + timeout + "ms) limit");
@@ -118,23 +126,28 @@ final class NettyChannel extends AbstractChannel {
     }
 
     @Override
+    @SuppressWarnings("Duplicates")
     public void close() {
         try {
+            // 标记关闭
             super.close();
         } catch (Exception e) {
             logger.warn(e.getMessage(), e);
         }
         try {
+            // 移除如果断开
             removeChannelIfDisconnected(channel);
         } catch (Exception e) {
             logger.warn(e.getMessage(), e);
         }
         try {
+            // 清空属性
             attributes.clear();
         } catch (Exception e) {
             logger.warn(e.getMessage(), e);
         }
         try {
+            // 关闭真正的通道 channel
             if (logger.isInfoEnabled()) {
                 logger.info("Close netty channel " + channel);
             }

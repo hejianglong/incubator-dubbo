@@ -88,10 +88,13 @@ public class NettyClient extends AbstractClient {
     @Override
     protected void doConnect() throws Throwable {
         long start = System.currentTimeMillis();
+        // 连接服务器
         ChannelFuture future = bootstrap.connect(getConnectAddress());
         try {
+            // 等待连接成功或者超时
             boolean ret = future.awaitUninterruptibly(getConnectTimeout(), TimeUnit.MILLISECONDS);
 
+            // 连接成功
             if (ret && future.isSuccess()) {
                 Channel newChannel = future.channel();
                 try {
@@ -108,6 +111,7 @@ public class NettyClient extends AbstractClient {
                         }
                     }
                 } finally {
+                    // 如果 NettyClient 被关闭，关闭连接
                     if (NettyClient.this.isClosed()) {
                         try {
                             if (logger.isInfoEnabled()) {
@@ -119,6 +123,7 @@ public class NettyClient extends AbstractClient {
                             NettyChannel.removeChannelIfDisconnected(newChannel);
                         }
                     } else {
+                        // 设置新的链接
                         NettyClient.this.channel = newChannel;
                     }
                 }

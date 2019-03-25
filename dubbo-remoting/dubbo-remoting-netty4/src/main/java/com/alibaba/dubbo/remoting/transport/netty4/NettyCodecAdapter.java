@@ -32,6 +32,7 @@ import java.util.List;
 
 /**
  * NettyCodecAdapter.
+ * 将 Dubbo 编解码器适配成 Netty4 的编码器和解码器
  */
 final class NettyCodecAdapter {
 
@@ -39,6 +40,7 @@ final class NettyCodecAdapter {
 
     private final ChannelHandler decoder = new InternalDecoder();
 
+    // 编解码器
     private final Codec2 codec;
 
     private final URL url;
@@ -83,6 +85,7 @@ final class NettyCodecAdapter {
 
             NettyChannel channel = NettyChannel.getOrAddChannel(ctx.channel(), url, handler);
 
+            // 循环解析直到结束
             Object msg;
 
             int saveReaderIndex;
@@ -90,16 +93,19 @@ final class NettyCodecAdapter {
             try {
                 // decode object.
                 do {
+                    // 记录当前读进度
                     saveReaderIndex = message.readerIndex();
                     try {
                         msg = codec.decode(channel, message);
                     } catch (IOException e) {
                         throw e;
                     }
+                    // 需要更多输入，即消息不完整，标记回原有读进度，并结束
                     if (msg == Codec2.DecodeResult.NEED_MORE_INPUT) {
                         message.readerIndex(saveReaderIndex);
                         break;
                     } else {
+                        // 解码到消息，添加到 out 中
                         //is it possible to go here ?
                         if (saveReaderIndex == message.readerIndex()) {
                             throw new IOException("Decode without read data.");

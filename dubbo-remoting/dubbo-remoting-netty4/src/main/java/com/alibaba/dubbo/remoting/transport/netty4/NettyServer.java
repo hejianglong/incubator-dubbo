@@ -52,6 +52,7 @@ public class NettyServer extends AbstractServer implements Server {
 
     private static final Logger logger = LoggerFactory.getLogger(NettyServer.class);
 
+    // 通道集合
     private Map<String, Channel> channels; // <ip:port, channel>
 
     private ServerBootstrap bootstrap;
@@ -101,6 +102,7 @@ public class NettyServer extends AbstractServer implements Server {
     @Override
     protected void doClose() throws Throwable {
         try {
+            // 关闭服务器通道
             if (channel != null) {
                 // unbind.
                 channel.close();
@@ -109,6 +111,7 @@ public class NettyServer extends AbstractServer implements Server {
             logger.warn(e.getMessage(), e);
         }
         try {
+            // 关闭连接到服务器的客户端通道
             Collection<com.alibaba.dubbo.remoting.Channel> channels = getChannels();
             if (channels != null && channels.size() > 0) {
                 for (com.alibaba.dubbo.remoting.Channel channel : channels) {
@@ -123,6 +126,7 @@ public class NettyServer extends AbstractServer implements Server {
             logger.warn(e.getMessage(), e);
         }
         try {
+            // 优雅的关闭工作组
             if (bootstrap != null) {
                 bossGroup.shutdownGracefully();
                 workerGroup.shutdownGracefully();
@@ -130,6 +134,7 @@ public class NettyServer extends AbstractServer implements Server {
         } catch (Throwable e) {
             logger.warn(e.getMessage(), e);
         }
+        // 清空连接到服务器的客户端通道
         try {
             if (channels != null) {
                 channels.clear();
@@ -146,6 +151,7 @@ public class NettyServer extends AbstractServer implements Server {
             if (channel.isConnected()) {
                 chs.add(channel);
             } else {
+                // 未连接，移除
                 channels.remove(NetUtils.toAddressString(channel.getRemoteAddress()));
             }
         }

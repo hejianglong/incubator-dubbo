@@ -23,6 +23,10 @@ import com.alibaba.dubbo.remoting.RemotingException;
 import com.alibaba.dubbo.remoting.Server;
 import com.alibaba.dubbo.remoting.Transporter;
 
+/**
+ * 基于 Dubbo SPI 机制加载
+ * 创建 NettyServer 和 NettyClient 对象
+ */
 public class NettyTransporter implements Transporter {
 
     public static final String NAME = "netty";
