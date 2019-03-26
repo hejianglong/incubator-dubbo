@@ -68,6 +68,7 @@ public class DubboProtocol extends AbstractProtocol {
      * key：服务器地址，格式为：host:port
      */
     private final Map<String, ExchangeServer> serverMap = new ConcurrentHashMap<String, ExchangeServer>(); // <host:port,Exchanger>
+    // 通信客户端集合，key：服务器地址，value：host:port
     private final Map<String, ReferenceCountExchangeClient> referenceClientMap = new ConcurrentHashMap<String, ReferenceCountExchangeClient>(); // <host:port,Exchanger>
     private final ConcurrentMap<String, LazyConnectExchangeClient> ghostClientMap = new ConcurrentHashMap<String, LazyConnectExchangeClient>();
     private final ConcurrentMap<String, Object> locks = new ConcurrentHashMap<String, Object>();
@@ -367,19 +368,22 @@ public class DubboProtocol extends AbstractProtocol {
 
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
+        // 是否共享连接
         boolean service_share_connect = false;
         int connections = url.getParameter(Constants.CONNECTIONS_KEY, 0);
         // if not configured, connection is shared, otherwise, one connection for one service
+        // 未配置，默认共享
         if (connections == 0) {
             service_share_connect = true;
             connections = 1;
         }
 
+        // 创建连接服务提供者 ExchangeClient 对象数组
         ExchangeClient[] clients = new ExchangeClient[connections];
         for (int i = 0; i < clients.length; i++) {
-            if (service_share_connect) {
+            if (service_share_connect) { // 共享
                 clients[i] = getSharedClient(url);
-            } else {
+            } else { // 非共享
                 clients[i] = initClient(url);
             }
         }
@@ -390,19 +394,23 @@ public class DubboProtocol extends AbstractProtocol {
      * Get shared connection
      */
     private ExchangeClient getSharedClient(URL url) {
+        // 取出 host:port
         String key = url.getAddress();
         ReferenceCountExchangeClient client = referenceClientMap.get(key);
         if (client != null) {
+            // 如果没有关闭，则增加指向 cient 的数量
             if (!client.isClosed()) {
                 client.incrementAndGetCount();
                 return client;
             } else {
+                // 已经关闭了则移除
                 referenceClientMap.remove(key);
             }
         }
 
         locks.putIfAbsent(key, new Object());
         synchronized (locks.get(key)) {
+            // 如果已经创建则直接返回
             if (referenceClientMap.containsKey(key)) {
                 return referenceClientMap.get(key);
             }
@@ -422,13 +430,17 @@ public class DubboProtocol extends AbstractProtocol {
     private ExchangeClient initClient(URL url) {
 
         // client type setting.
+        // 获取 client type Dubbo SPI # netty
         String str = url.getParameter(Constants.CLIENT_KEY, url.getParameter(Constants.SERVER_KEY, Constants.DEFAULT_REMOTING_CLIENT));
 
+        // 添加编解码器，默认为 Dubbo
         url = url.addParameter(Constants.CODEC_KEY, DubboCodec.NAME);
         // enable heartbeat by default
+        // 默认开启，添加心跳
         url = url.addParameterIfAbsent(Constants.HEARTBEAT_KEY, String.valueOf(Constants.DEFAULT_HEARTBEAT));
 
         // BIO is not allowed since it has severe performance issue.
+        // 不支持 BIO
         if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {
             throw new RpcException("Unsupported client type: " + str + "," +
                     " supported client type is " + StringUtils.join(ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions(), " "));
@@ -437,9 +449,11 @@ public class DubboProtocol extends AbstractProtocol {
         ExchangeClient client;
         try {
             // connection should be lazy
+            // 懒加载，创建 LazyConnectExchangeClient 对象
             if (url.getParameter(Constants.LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
             } else {
+                // 直接连接创建 HeaderExchangeClient 对象
                 client = Exchangers.connect(url, requestHandler);
             }
         } catch (RemotingException e) {

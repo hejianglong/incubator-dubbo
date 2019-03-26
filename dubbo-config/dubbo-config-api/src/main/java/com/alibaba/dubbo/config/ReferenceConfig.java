@@ -390,6 +390,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
+            // 如果是直连的
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -406,10 +407,12 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     }
                 }
             } else { // assemble URL from register center's configuration
+                // 加载注册中心 url 数组
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
                         URL monitorUrl = loadMonitor(u);
+                        // 是否存在监控中心
                         if (monitorUrl != null) {
                             map.put(Constants.MONITOR_KEY, URL.encode(monitorUrl.toFullString()));
                         }
@@ -421,6 +424,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
 
+            // 如果只有一个注册中心
             if (urls.size() == 1) {
                 invoker = refprotocol.refer(interfaceClass, urls.get(0));
             } else {

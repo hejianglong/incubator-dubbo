@@ -43,13 +43,17 @@ final class LazyConnectExchangeClient implements ExchangeClient {
     // when this warning rises from invocation, program probably have bug.
     static final String REQUEST_WITH_WARNING_KEY = "lazyclient_request_with_warning";
     private final static Logger logger = LoggerFactory.getLogger(LazyConnectExchangeClient.class);
+    // 请求时候，是否检查警告
     protected final boolean requestWithWarning;
     private final URL url;
     private final ExchangeHandler requestHandler;
+    // 连接锁
     private final Lock connectLock = new ReentrantLock();
     // lazy connect, initial state for connection
+    // 如果没有初始化客户端时的链接状态
     private final boolean initialState;
     private volatile ExchangeClient client;
+    // 警告计数器，每超过一定次数，打印告警日志
     private AtomicLong warningcount = new AtomicLong(0);
 
     public LazyConnectExchangeClient(URL url, ExchangeHandler requestHandler) {
@@ -62,6 +66,7 @@ final class LazyConnectExchangeClient implements ExchangeClient {
 
 
     private void initClient() throws RemotingException {
+        // 已经初始化过了，返回
         if (client != null)
             return;
         if (logger.isInfoEnabled()) {
@@ -71,6 +76,7 @@ final class LazyConnectExchangeClient implements ExchangeClient {
         try {
             if (client != null)
                 return;
+            // 创建 Client，连接服务器
             this.client = Exchangers.connect(url, requestHandler);
         } finally {
             connectLock.unlock();
@@ -111,6 +117,7 @@ final class LazyConnectExchangeClient implements ExchangeClient {
      * @param request
      */
     private void warning(Object request) {
+        // 开启了警告日志，隔一段时间打印一次
         if (requestWithWarning) {
             if (warningcount.get() % 5000 == 0) {
                 logger.warn(new IllegalStateException("safe guard client , should not be called ,must have a bug."));
