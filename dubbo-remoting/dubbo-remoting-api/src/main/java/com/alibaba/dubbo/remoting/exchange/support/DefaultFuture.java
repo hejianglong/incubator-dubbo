@@ -43,8 +43,10 @@ public class DefaultFuture implements ResponseFuture {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
 
+    // 通道集合，key：请求编号
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<Long, Channel>();
 
+    // Future 集合，key：请求编号
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<Long, DefaultFuture>();
 
     static {
@@ -53,7 +55,7 @@ public class DefaultFuture implements ResponseFuture {
         th.start();
     }
 
-    // invoke id.
+    // invoke id. 请求编号
     private final long id;
     private final Channel channel;
     private final Request request;
@@ -61,8 +63,10 @@ public class DefaultFuture implements ResponseFuture {
     private final Lock lock = new ReentrantLock();
     private final Condition done = lock.newCondition();
     private final long start = System.currentTimeMillis();
+    // 发送请求时间
     private volatile long sent;
     private volatile Response response;
+    // 回调
     private volatile ResponseCallback callback;
 
     public DefaultFuture(Channel channel, Request request, int timeout) {
@@ -126,6 +130,7 @@ public class DefaultFuture implements ResponseFuture {
                         + " -> " + channel.getRemoteAddress()));
             }
         } finally {
+            // 移除请求对应的 channel
             CHANNELS.remove(response.getId());
         }
     }
@@ -137,13 +142,16 @@ public class DefaultFuture implements ResponseFuture {
 
     @Override
     public Object get(int timeout) throws RemotingException {
+        // 如果没有设置超时时间给与一个默认的值
         if (timeout <= 0) {
             timeout = Constants.DEFAULT_TIMEOUT;
         }
+        // 若未完成
         if (!isDone()) {
             long start = System.currentTimeMillis();
             lock.lock();
             try {
+                // 等待完成或者超时
                 while (!isDone()) {
                     done.await(timeout, TimeUnit.MILLISECONDS);
                     if (isDone() || System.currentTimeMillis() - start > timeout) {
@@ -155,6 +163,7 @@ public class DefaultFuture implements ResponseFuture {
             } finally {
                 lock.unlock();
             }
+            // 如果未完成，抛出超时异常
             if (!isDone()) {
                 throw new TimeoutException(sent > 0, channel, getTimeoutMessage(false));
             }
@@ -208,6 +217,7 @@ public class DefaultFuture implements ResponseFuture {
             throw new IllegalStateException("response cannot be null. url:" + channel.getUrl());
         }
 
+        // 正常处理结果
         if (res.getStatus() == Response.OK) {
             try {
                 callbackCopy.done(res.getResult());
@@ -313,11 +323,13 @@ public class DefaultFuture implements ResponseFuture {
                         }
                         if (System.currentTimeMillis() - future.getStartTimestamp() > future.getTimeout()) {
                             // create exception response.
+                            // 创建超时 Response
                             Response timeoutResponse = new Response(future.getId());
                             // set timeout status.
                             timeoutResponse.setStatus(future.isSent() ? Response.SERVER_TIMEOUT : Response.CLIENT_TIMEOUT);
                             timeoutResponse.setErrorMessage(future.getTimeoutMessage(true));
                             // handle response.
+                            // 响应结果
                             DefaultFuture.received(future.getChannel(), timeoutResponse);
                         }
                     }
