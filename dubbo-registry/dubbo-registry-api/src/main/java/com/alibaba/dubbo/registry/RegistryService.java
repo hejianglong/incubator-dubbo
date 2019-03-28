@@ -38,6 +38,7 @@ public interface RegistryService {
      * 4. When the registry is restarted, network jitter, data can not be lost, including automatically deleting data from the broken line.<br>
      * 5. Allow URLs which have the same URL but different parameters to coexist,they can't cover each other.<br>
      *
+     * 注册数据，比如：提供者地址，消费者地址，路由规则，覆盖规则等数据
      * @param url  Registration information , is not allowed to be empty, e.g: dubbo://10.20.153.10/com.alibaba.foo.BarService?version=1.0.0&application=kylin
      */
     void register(URL url);
@@ -64,7 +65,7 @@ public interface RegistryService {
      * 5. When the registry is restarted and network jitter, it is necessary to automatically restore the subscription request.<br>
      * 6. Allow URLs which have the same URL but different parameters to coexist,they can't cover each other.<br>
      * 7. The subscription process must be blocked, when the first notice is finished and then returned.<br>
-     *
+     * 订阅符合条件的已注册的数据，当有注册数据变更时候自动推送
      * @param url      Subscription condition, not allowed to be empty, e.g. consumer://10.20.153.10/com.alibaba.foo.BarService?version=1.0.0&application=kylin
      * @param listener A listener of the change event, not allowed to be empty
      */

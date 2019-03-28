@@ -56,20 +56,28 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class AbstractRegistry implements Registry {
 
     // URL address separator, used in file cache, service provider URL separation
+    // URL 地址分隔符，用于文件缓存中，服务提供者 URL 分隔
     private static final char URL_SEPARATOR = ' ';
+    // URL 地址分隔正则表达式，用于解析文件缓存中国服务提供者 URL 列表
     // URL address separated regular expression for parsing the service provider URL list in the file cache
     private static final String URL_SPLIT = "\\s+";
     // Log output
     protected final Logger logger = LoggerFactory.getLogger(getClass());
     // Local disk cache, where the special key value.registies records the list of registry centers, and the others are the list of notified service providers
+    // 本地磁盘缓存，其中特殊的 Key 值 .registies 记录注册中心列表，其它均为 {@link #notified} 服务提供者列表
     private final Properties properties = new Properties();
     // File cache timing writing
+    // 注册中心缓存写入执行器，线程数 = 1
     private final ExecutorService registryCacheExecutor = Executors.newFixedThreadPool(1, new NamedThreadFactory("DubboSaveRegistryCache", true));
     // Is it synchronized to save the file
+    // 是否同步保存文件
     private final boolean syncSaveFile;
+    // 数据版本号
     private final AtomicLong lastCacheChanged = new AtomicLong();
+    // 已经注册 url 集合
     private final Set<URL> registered = new ConcurrentHashSet<URL>();
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<URL, Set<NotifyListener>>();
+    // 已经被通知的 url 集合
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<URL, Map<String, List<URL>>>();
     private URL registryUrl;
     // Local disk cache file

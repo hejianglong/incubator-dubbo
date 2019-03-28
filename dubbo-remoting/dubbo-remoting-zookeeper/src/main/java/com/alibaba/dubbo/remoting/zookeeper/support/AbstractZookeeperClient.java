@@ -29,6 +29,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ *  Zookeeper 客户端抽象类，实现通用逻辑
+ * @param <TargetChildListener>
+ */
 public abstract class AbstractZookeeperClient<TargetChildListener> implements ZookeeperClient {
 
     protected static final Logger logger = LoggerFactory.getLogger(AbstractZookeeperClient.class);
@@ -57,13 +61,16 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
                 return;
             }
         }
+        // 循环创建父节点
         int i = path.lastIndexOf('/');
         if (i > 0) {
             create(path.substring(0, i), false);
         }
+        // 创建临时几点
         if (ephemeral) {
             createEphemeral(path);
         } else {
+            // 创建永久节点
             createPersistent(path);
         }
     }
@@ -84,16 +91,19 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
 
     @Override
     public List<String> addChildListener(String path, final ChildListener listener) {
+        // 获得路径下的监听器数组
         ConcurrentMap<ChildListener, TargetChildListener> listeners = childListeners.get(path);
         if (listeners == null) {
             childListeners.putIfAbsent(path, new ConcurrentHashMap<ChildListener, TargetChildListener>());
             listeners = childListeners.get(path);
         }
         TargetChildListener targetListener = listeners.get(listener);
+        // 监听器不存在则进行创建
         if (targetListener == null) {
             listeners.putIfAbsent(listener, createTargetChildListener(path, listener));
             targetListener = listeners.get(listener);
         }
+        // 向 zookeeper 发起订阅
         return addTargetChildListener(path, targetListener);
     }
 
@@ -103,6 +113,7 @@ public abstract class AbstractZookeeperClient<TargetChildListener> implements Zo
         if (listeners != null) {
             TargetChildListener targetListener = listeners.remove(listener);
             if (targetListener != null) {
+                // 向 Zookeeper 真正发起取消订阅
                 removeTargetChildListener(path, targetListener);
             }
         }
