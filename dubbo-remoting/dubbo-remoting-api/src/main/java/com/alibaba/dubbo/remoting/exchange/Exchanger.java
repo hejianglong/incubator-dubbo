@@ -28,13 +28,14 @@ import com.alibaba.dubbo.remoting.exchange.support.header.HeaderExchanger;
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Message_Exchange_Pattern">Message Exchange Pattern</a>
  * <a href="http://en.wikipedia.org/wiki/Request-response">Request-Response</a>
+ * 默认为 HeaderExchanger
  */
 @SPI(HeaderExchanger.NAME)
 public interface Exchanger {
 
     /**
      * bind.
-     *
+     * 绑定一个服务器
      * @param url
      * @param handler
      * @return message server
@@ -44,7 +45,7 @@ public interface Exchanger {
 
     /**
      * connect.
-     *
+     * 连接一个服务器，即创建一个客户端
      * @param url
      * @param handler
      * @return message channel
