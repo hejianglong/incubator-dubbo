@@ -51,7 +51,9 @@ public class SpringContainer implements Container {
     public void stop() {
         try {
             if (context != null) {
+                // 停止 Spring Context，会触发 ContextStoppedEvent
                 context.stop();
+                // 关闭 Spring Context，会触发 ContextClosedEvent
                 context.close();
                 context = null;
             }

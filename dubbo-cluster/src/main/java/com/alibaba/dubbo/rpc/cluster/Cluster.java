@@ -27,14 +27,16 @@ import com.alibaba.dubbo.rpc.cluster.support.FailoverCluster;
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Computer_cluster">Cluster</a>
  * <a href="http://en.wikipedia.org/wiki/Fault-tolerant_system">Fault-Tolerant</a>
- *
+ * 基于 Dubbo SPI 拓展点，默认为 failover，即失败重试 FailoverCluster
  */
 @SPI(FailoverCluster.NAME)
 public interface Cluster {
 
     /**
      * Merge the directory invokers to a virtual invoker.
+     * 基于 Directory，创建 Invoker 对象，实现统一、透明的 Invoker 调用过程
      *
+     * 基于 @Adaptive 注解，加载对应的 Cluster 实现，使用 URL.cluster
      * @param <T>
      * @param directory
      * @return cluster invoker

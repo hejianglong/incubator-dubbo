@@ -37,10 +37,12 @@ public class Main {
 
     public static final String CONTAINER_KEY = "dubbo.container";
 
+    // ShutdownHook 是否开启配置 KEY
     public static final String SHUTDOWN_HOOK_KEY = "dubbo.shutdown.hook";
 
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
+    // Container 拓展点对应的 ExtensionLoader 对象
     private static final ExtensionLoader<Container> loader = ExtensionLoader.getExtensionLoader(Container.class);
 
     private static final ReentrantLock LOCK = new ReentrantLock();

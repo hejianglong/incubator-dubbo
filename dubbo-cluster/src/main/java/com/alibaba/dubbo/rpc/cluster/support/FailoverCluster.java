@@ -23,7 +23,8 @@ import com.alibaba.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link FailoverClusterInvoker}
- *
+ * 实现 Cluster 接口，失败自动切换，当出现失败，重试其它服务器
+ * 通常用于读操作，但是重试会带来更长延迟，可以通过 retries=2 来设置重试次数
  */
 public class FailoverCluster implements Cluster {
 
