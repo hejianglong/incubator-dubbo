@@ -81,9 +81,11 @@ public class DubboProtocol extends AbstractProtocol {
         @Override
         public Object reply(ExchangeChannel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
+                // 获得请求的 Invoker 对象
                 Invocation inv = (Invocation) message;
                 Invoker<?> invoker = getInvoker(channel, inv);
                 // need to consider backward-compatibility if it's a callback
+                // 如果是 callback 需要处理高版本调用低版本问题
                 if (Boolean.TRUE.toString().equals(inv.getAttachments().get(IS_CALLBACK_SERVICE_INVOKE))) {
                     String methodsStr = invoker.getUrl().getParameters().get("methods");
                     boolean hasMethod = false;
@@ -106,7 +108,9 @@ public class DubboProtocol extends AbstractProtocol {
                         return null;
                     }
                 }
+                // 设置调用方的地址
                 RpcContext.getContext().setRemoteAddress(channel.getRemoteAddress());
+                // 执行调用
                 return invoker.invoke(inv);
             }
             throw new RemotingException(channel, "Unsupported request: "
