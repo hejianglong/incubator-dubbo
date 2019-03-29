@@ -379,6 +379,13 @@ public abstract class AbstractRegistry implements Registry {
         }
     }
 
+    /**
+     * 通知监听器 URL 变化结果
+     * 数据流向 urls => #notified => #properties => #file
+     * @param url 消费者 URL
+     * @param listener 监听器
+     * @param urls 通知 URL 变化结果
+     */
     protected void notify(URL url, NotifyListener listener, List<URL> urls) {
         if (url == null) {
             throw new IllegalArgumentException("notify url == null");
@@ -395,6 +402,9 @@ public abstract class AbstractRegistry implements Registry {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
+        // 将 urls 按照 url.parameter.category 分类，添加到集合
+        // 注意特殊情况，使用 curator 连接 Zookeeper 时，若是服务消费者，连接断开，会出现
+        // category=providers，configurations，routes
         for (URL u : urls) {
             if (UrlUtils.isMatch(url, u)) {
                 String category = u.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
@@ -409,16 +419,19 @@ public abstract class AbstractRegistry implements Registry {
         if (result.size() == 0) {
             return;
         }
+        // 获得消费者 URL 对应的再 notified 中，通知 URL 变化结果（全量数据）
         Map<String, List<URL>> categoryNotified = notified.get(url);
         if (categoryNotified == null) {
             notified.putIfAbsent(url, new ConcurrentHashMap<String, List<URL>>());
             categoryNotified = notified.get(url);
         }
+        // 按照分类循环处理通知的 URL 变化结果
         for (Map.Entry<String, List<URL>> entry : result.entrySet()) {
             String category = entry.getKey();
             List<URL> categoryList = entry.getValue();
             categoryNotified.put(category, categoryList);
             saveProperties(url);
+            // 通知监听器
             listener.notify(categoryList);
         }
     }

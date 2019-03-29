@@ -36,19 +36,23 @@ import java.util.List;
 
 /**
  * Abstract implementation of Directory: Invoker list returned from this Directory's list method have been filtered by Routers
- *
+ * 实现 Directory 接口，Directory 抽象类，实现了公用的路由规则
  */
 public abstract class AbstractDirectory<T> implements Directory<T> {
 
     // logger
     private static final Logger logger = LoggerFactory.getLogger(AbstractDirectory.class);
 
+    // 注册中心 URL
     private final URL url;
 
+    // 是否已经销毁
     private volatile boolean destroyed = false;
 
+    // 消费者 URL
     private volatile URL consumerUrl;
 
+    // 路由数组
     private volatile List<Router> routers;
 
     public AbstractDirectory(URL url) {
@@ -72,8 +76,10 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         if (destroyed) {
             throw new RpcException("Directory already destroyed .url: " + getUrl());
         }
+        // 获得所有的 Invoker 集合
         List<Invoker<T>> invokers = doList(invocation);
         List<Router> localRouters = this.routers; // local reference
+        // 根据路由规则，筛选 Invoker 集合
         if (localRouters != null && !localRouters.isEmpty()) {
             for (Router router : localRouters) {
                 try {
