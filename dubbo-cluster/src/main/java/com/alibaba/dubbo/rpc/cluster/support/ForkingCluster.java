@@ -23,7 +23,8 @@ import com.alibaba.dubbo.rpc.cluster.Directory;
 
 /**
  * {@link ForkingClusterInvoker}
- *
+ * 并行调用多个服务器，只要一个成功即返回，通常用于实时性要求比较高的读操作，但是
+ * 需要浪费更多的服务资源，可以通过 forks = 2 来设置最大并行数
  */
 public class ForkingCluster implements Cluster {
 

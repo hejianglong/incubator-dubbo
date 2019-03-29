@@ -30,7 +30,8 @@ import java.util.List;
 
 /**
  * BroadcastClusterInvoker
- *
+ * 广播调用所有提供者，逐个调用，任意一台报错则报错
+ * 通常用于通知所有提供者更新缓存或日志等本地资源文件
  */
 public class BroadcastClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
@@ -43,10 +44,15 @@ public class BroadcastClusterInvoker<T> extends AbstractClusterInvoker<T> {
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Result doInvoke(final Invocation invocation, List<Invoker<T>> invokers, LoadBalance loadbalance) throws RpcException {
+        // 校验 invoker
         checkInvokers(invokers, invocation);
+        // 设置以及调用的 Invoker 集合，到 Context 中
         RpcContext.getContext().setInvokers((List) invokers);
+        // 保存最后一次报错
         RpcException exception = null;
+        // 保存最后一次结果
         Result result = null;
+        // 循环调用所有的 invoker
         for (Invoker<T> invoker : invokers) {
             try {
                 result = invoker.invoke(invocation);
@@ -58,6 +64,7 @@ public class BroadcastClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 logger.warn(e.getMessage(), e);
             }
         }
+        // 若存在异常则抛出
         if (exception != null) {
             throw exception;
         }
