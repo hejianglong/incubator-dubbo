@@ -50,18 +50,9 @@ public class Consumer {
     }
 
     private static void testConsumer() {
-        ApplicationConfig application = new ApplicationConfig();
-        application.setName("consumer");
-
-        RegistryConfig registryConfig = new RegistryConfig();
-        registryConfig.setAddress("zookeeper://127.0.0.1:2181");
-
-        ReferenceConfig<DemoService> reference = new ReferenceConfig<DemoService>();
-        reference.setApplication(application);
-        reference.setRegistry(registryConfig);
-        reference.setInterface(DemoService.class);
-
-        DemoService demoService = reference.get();
-        System.out.println(demoService.sayHello("out ..."));
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(new String[]{"META-INF/spring/dubbo-demo-consumer.xml"});
+        context.start();
+        DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
+        String hello = demoService.sayHello("world"); // call remote method*/
     }
 }

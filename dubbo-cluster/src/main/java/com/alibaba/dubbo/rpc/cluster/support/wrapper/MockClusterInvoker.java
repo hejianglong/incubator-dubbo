@@ -69,20 +69,23 @@ public class MockClusterInvoker<T> implements Invoker<T> {
     public Result invoke(Invocation invocation) throws RpcException {
         Result result = null;
 
+        // 获得 mock 配置项，有多种重配置方式
         String value = directory.getUrl().getMethodParameter(invocation.getMethodName(), Constants.MOCK_KEY, Boolean.FALSE.toString()).trim();
         if (value.length() == 0 || value.equalsIgnoreCase("false")) {
-            //no mock
-            // 调用具体的集群容错 Invoker 默认为 FailoverCluster 失败重试
+            // no mock
+            // 没有 Mock，调用具体的集群容错 Invoker 默认为 FailoverCluster 失败重试
             result = this.invoker.invoke(invocation);
         } else if (value.startsWith("force")) {
             if (logger.isWarnEnabled()) {
                 logger.info("force-mock: " + invocation.getMethodName() + " force-mock enabled , url : " + directory.getUrl());
             }
+            // 如果为 force 强制，不走调用，执行本地 mock 逻辑
             //force:direct mock
             result = doMockInvoke(invocation, null);
         } else {
             //fail-mock
             try {
+                // 正常调用
                 result = this.invoker.invoke(invocation);
             } catch (RpcException e) {
                 if (e.isBiz()) {
@@ -91,6 +94,7 @@ public class MockClusterInvoker<T> implements Invoker<T> {
                     if (logger.isWarnEnabled()) {
                         logger.warn("fail-mock: " + invocation.getMethodName() + " fail-mock enabled , url : " + directory.getUrl(), e);
                     }
+                    // 出错则执行 mock 逻辑，返回结果
                     result = doMockInvoke(invocation, e);
                 }
             }
@@ -103,6 +107,7 @@ public class MockClusterInvoker<T> implements Invoker<T> {
         Result result = null;
         Invoker<T> minvoker;
 
+        // 路由匹配 Mock Invoker 集合
         List<Invoker<T>> mockInvokers = selectMockInvoker(invocation);
         if (mockInvokers == null || mockInvokers.isEmpty()) {
             minvoker = (Invoker<T>) new MockInvoker(directory.getUrl());
@@ -110,6 +115,7 @@ public class MockClusterInvoker<T> implements Invoker<T> {
             minvoker = mockInvokers.get(0);
         }
         try {
+            // 调用，执行本地 Mock 逻辑
             result = minvoker.invoke(invocation);
         } catch (RpcException me) {
             if (me.isBiz()) {
@@ -144,9 +150,11 @@ public class MockClusterInvoker<T> implements Invoker<T> {
         List<Invoker<T>> invokers = null;
         //TODO generic invoker？
         if (invocation instanceof RpcInvocation) {
+            // 存在隐含契约（虽然在接口声明中增加描述，但拓展性会存在问题，同时放在 attachment 中的做法需要改进）
             //Note the implicit contract (although the description is added to the interface declaration, but extensibility is a problem. The practice placed in the attachement needs to be improved)
             ((RpcInvocation) invocation).setAttachment(Constants.INVOCATION_NEED_MOCK, Boolean.TRUE.toString());
             //directory will return a list of normal invokers if Constants.INVOCATION_NEED_MOCK is present in invocation, otherwise, a list of mock invokers will return.
+            // directory 根据 Invocation 中 attachment 是否有 Constants.INVOCATION_NEED_MOCK，来判断获取的是否是 mock invokers
             try {
                 invokers = directory.list(invocation);
             } catch (RpcException e) {
