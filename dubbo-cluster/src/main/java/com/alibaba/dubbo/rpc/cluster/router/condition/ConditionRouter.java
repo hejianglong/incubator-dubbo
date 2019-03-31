@@ -47,8 +47,11 @@ public class ConditionRouter extends AbstractRouter {
     private static final Logger logger = LoggerFactory.getLogger(ConditionRouter.class);
     private static final int DEFAULT_PRIORITY = 2;
     private static Pattern ROUTE_PATTERN = Pattern.compile("([&!=,]*)\\s*([^&!=,\\s]+)");
+    // 当路由结果为空时候，是否强制执行，如果不强制执行，路由结果为空的路由规则将自动失效，可不填，默认为 false
     private final boolean force;
+    // => 前半部分
     private final Map<String, MatchPair> whenCondition;
+    // => 后半部分
     private final Map<String, MatchPair> thenCondition;
 
     public ConditionRouter(URL url) {
@@ -148,28 +151,33 @@ public class ConditionRouter extends AbstractRouter {
             return invokers;
         }
         try {
+            // 不包含路由规则，返回所有的 Invoker
             if (!matchWhen(url, invocation)) {
                 return invokers;
             }
             List<Invoker<T>> result = new ArrayList<Invoker<T>>();
+            // => 值为 null 则返回空的 Invoker 集合
             if (thenCondition == null) {
                 logger.warn("The current consumer in the service blacklist. consumer: " + NetUtils.getLocalHost() + ", service: " + url.getServiceKey());
                 return result;
             }
+            // 遍历每一个 Invoker 看是否符合路由规则，符合则添加到 result 中
             for (Invoker<T> invoker : invokers) {
                 if (matchThen(invoker.getUrl(), url)) {
                     result.add(invoker);
                 }
             }
+            // 如果最终结果不为空，返回结果
             if (!result.isEmpty()) {
                 return result;
-            } else if (force) {
+            } else if (force) { // 如果 force 为 true 则代表强制执行，返回空的 Invoker 集合
                 logger.warn("The route result is empty and force execute. consumer: " + NetUtils.getLocalHost() + ", service: " + url.getServiceKey() + ", router: " + url.getParameterAndDecoded(Constants.RULE_KEY));
                 return result;
             }
         } catch (Throwable t) {
             logger.error("Failed to execute condition router rule: " + getUrl() + ", invokers: " + invokers + ", cause: " + t.getMessage(), t);
         }
+        // 如果 forece=false，代表不强制执行，返回 Invokers 集合，即忽略路由规则
         return invokers;
     }
 
@@ -210,6 +218,7 @@ public class ConditionRouter extends AbstractRouter {
                     sampleValue = sample.get(Constants.DEFAULT_KEY_PREFIX + key);
                 }
             }
+            // 匹配条件值
             if (sampleValue != null) {
                 if (!matchPair.getValue().isMatch(sampleValue, param)) {
                     return false;
@@ -218,6 +227,7 @@ public class ConditionRouter extends AbstractRouter {
                 }
             } else {
                 //not pass the condition
+                // 有条件值返回不匹配，否则返回匹配
                 if (!matchPair.getValue().matches.isEmpty()) {
                     return false;
                 } else {
