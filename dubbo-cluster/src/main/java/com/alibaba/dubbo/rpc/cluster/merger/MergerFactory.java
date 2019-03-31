@@ -27,11 +27,13 @@ import java.util.concurrent.ConcurrentMap;
 
 public class MergerFactory {
 
+    // Merger 对象缓存
     private static final ConcurrentMap<Class<?>, Merger<?>> mergerCache =
             new ConcurrentHashMap<Class<?>, Merger<?>>();
 
     public static <T> Merger<T> getMerger(Class<T> returnType) {
         Merger result;
+        // 数组类型
         if (returnType.isArray()) {
             Class type = returnType.getComponentType();
             result = mergerCache.get(type);
@@ -43,6 +45,7 @@ public class MergerFactory {
                 result = ArrayMerger.INSTANCE;
             }
         } else {
+            // 普通类型
             result = mergerCache.get(returnType);
             if (result == null) {
                 loadMergers();
@@ -52,6 +55,9 @@ public class MergerFactory {
         return result;
     }
 
+    /**
+     * 初始化所有的 Merger 拓展对象，到 mergeCache 缓存中
+     */
     static void loadMergers() {
         Set<String> names = ExtensionLoader.getExtensionLoader(Merger.class)
                 .getSupportedExtensions();
