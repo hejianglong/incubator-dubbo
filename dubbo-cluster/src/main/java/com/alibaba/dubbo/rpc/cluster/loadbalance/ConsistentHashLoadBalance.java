@@ -33,6 +33,8 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * ConsistentHashLoadBalance
+ * 相同参数的请求总是发送到同一个提供者
+ * 当某一台提供者挂了，原本发往该提供者的请求，基于虚拟节点，平摊到其它提供者，不会引起剧烈变动
  *
  */
 public class ConsistentHashLoadBalance extends AbstractLoadBalance {
@@ -44,8 +46,10 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         String methodName = RpcUtils.getMethodName(invocation);
         String key = invokers.get(0).getUrl().getServiceKey() + "." + methodName;
+        // 基于 Invokers 集合，根据内存地址来计算定义哈希值
         int identityHashCode = System.identityHashCode(invokers);
         ConsistentHashSelector<T> selector = (ConsistentHashSelector<T>) selectors.get(key);
+        // 获得 ConsistentHashSelector 对象，若为空，或者定义哈希值变更（说明 Invokers 集合发生变化），进行创建 ConsistentHashSelector
         if (selector == null || selector.identityHashCode != identityHashCode) {
             selectors.put(key, new ConsistentHashSelector<T>(invokers, methodName, identityHashCode));
             selector = (ConsistentHashSelector<T>) selectors.get(key);
@@ -55,26 +59,35 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
 
     private static final class ConsistentHashSelector<T> {
 
+        // 虚拟节点与 Invoker 的映射关系
         private final TreeMap<Long, Invoker<T>> virtualInvokers;
 
+        // 每个 Invoker 对应的虚拟节点数
         private final int replicaNumber;
 
+        // 定义哈希值
         private final int identityHashCode;
 
+        // 取值参数位置数组
         private final int[] argumentIndex;
 
         ConsistentHashSelector(List<Invoker<T>> invokers, String methodName, int identityHashCode) {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();
+            // <dubbo:parameter key="hash.nodes" value="180" /> 自定义
             this.replicaNumber = url.getMethodParameter(methodName, "hash.nodes", 160);
+            // 取出 hash.arguments 初始化 argumentIndex 数组
+            // <dubbo:parameter key="hash.argument" value="0,1" /> 自定义
             String[] index = Constants.COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, "hash.arguments", "0"));
             argumentIndex = new int[index.length];
             for (int i = 0; i < index.length; i++) {
                 argumentIndex[i] = Integer.parseInt(index[i]);
             }
+            // 每个 invoker 对应一组虚拟节点，每一组虚拟节点占 4 组，每组 4 个字节
             for (Invoker<T> invoker : invokers) {
                 String address = invoker.getUrl().getAddress();
+                // 因为 md5 值是 16 字节的，所以上面用 4 组接收
                 for (int i = 0; i < replicaNumber / 4; i++) {
                     byte[] digest = md5(address + i);
                     for (int h = 0; h < 4; h++) {
@@ -86,7 +99,9 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         public Invoker<T> select(Invocation invocation) {
+            // 基于方法参数获得 key
             String key = toKey(invocation.getArguments());
+            // 计算 MD5 值
             byte[] digest = md5(key);
             return selectForKey(hash(digest, 0));
         }
@@ -102,7 +117,9 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         private Invoker<T> selectForKey(long hash) {
+            // 获取大于当前 key 的那个子 Map，然后从中取出第一个
             Map.Entry<Long, Invoker<T>> entry = virtualInvokers.tailMap(hash, true).firstEntry();
+            // 如果不存在，则取 virtualInvokers 第一个
             if (entry == null) {
                 entry = virtualInvokers.firstEntry();
             }

@@ -33,7 +33,11 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Round robin load balance.
  * 
- * Smoothly round robin's implementation @since 2.6.5 
+ * Smoothly round robin's implementation @since 2.6.5
+ * 轮询，按公约后的权重设置轮询比率
+ *
+ * 存在慢的提供者累积请求的问题，比如：第二台机器很慢，但没有挂
+ * 当请求调用到第二台时就挂在那，久而久之所有请求都卡在调用到第二台上
  */
 public class RoundRobinLoadBalance extends AbstractLoadBalance {
     public static final String NAME = "roundrobin";
@@ -65,6 +69,7 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
         }
     }
 
+    // 服务方法与计数器的映射，servicekey => methodName
     private ConcurrentMap<String, ConcurrentMap<String, WeightedRoundRobin>> methodWeightMap = new ConcurrentHashMap<String, ConcurrentMap<String, WeightedRoundRobin>>();
     private AtomicBoolean updateLock = new AtomicBoolean();
     
@@ -85,7 +90,8 @@ public class RoundRobinLoadBalance extends AbstractLoadBalance {
         }
         return null;
     }
-    
+
+    // TODO - 详情分析
     @Override
     protected <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation) {
         String key = invokers.get(0).getUrl().getServiceKey() + "." + invocation.getMethodName();

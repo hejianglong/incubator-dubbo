@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * AbstractLoadBalance
- *
+ * 提供了权重计算的功能
  */
 public abstract class AbstractLoadBalance implements LoadBalance {
 
@@ -44,15 +44,27 @@ public abstract class AbstractLoadBalance implements LoadBalance {
         return doSelect(invokers, url, invocation);
     }
 
+    /**
+     * 提供自定义的负载均衡策略
+     * @param invokers
+     * @param url
+     * @param invocation
+     * @param <T>
+     * @return
+     */
     protected abstract <T> Invoker<T> doSelect(List<Invoker<T>> invokers, URL url, Invocation invocation);
 
     protected int getWeight(Invoker<?> invoker, Invocation invocation) {
+        // 获得 weight 配置，即服务权重，默认为 100
         int weight = invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.WEIGHT_KEY, Constants.DEFAULT_WEIGHT);
         if (weight > 0) {
             long timestamp = invoker.getUrl().getParameter(Constants.REMOTE_TIMESTAMP_KEY, 0L);
             if (timestamp > 0L) {
+                // 获得启动总时长
                 int uptime = (int) (System.currentTimeMillis() - timestamp);
+                // 获得预热需要的总时长，默认为 10 * 60 * 1000
                 int warmup = invoker.getUrl().getParameter(Constants.WARMUP_KEY, Constants.DEFAULT_WARMUP);
+                // 处于预热中计算当前权重
                 if (uptime > 0 && uptime < warmup) {
                     weight = calculateWarmupWeight(uptime, warmup, weight);
                 }
