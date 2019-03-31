@@ -57,7 +57,7 @@ import static com.alibaba.dubbo.common.Constants.CHECK_KEY;
 
 /**
  * RegistryProtocol
- *
+ * 通过向注册中心注册 OverrideListener 监听器，从而集成配置规则到服务提供者中
  */
 public class RegistryProtocol implements Protocol {
 
@@ -378,10 +378,16 @@ public class RegistryProtocol implements Protocol {
      * 1.Ensure that the exporter returned by registryprotocol can be normal destroyed
      * 2.No need to re-register to the registry after notify
      * 3.The invoker passed by the export method , would better to be the invoker of exporter
+     *
+     * 要求 registry protocol 返回的 exporter 可以正常 destory
+     * notify 后不需要重新向注册中心注册
+     * export 方法传入的 Invoker 最好能一致作为 exporter 的 invoker
      */
     private class OverrideListener implements NotifyListener {
 
+        // 订阅 URL 对象
         private final URL subscribeUrl;
+        // 原始 Invoker 对象
         private final Invoker originInvoker;
 
         public OverrideListener(URL subscribeUrl, Invoker originalInvoker) {
@@ -395,6 +401,7 @@ public class RegistryProtocol implements Protocol {
         @Override
         public synchronized void notify(List<URL> urls) {
             logger.debug("original override urls: " + urls);
+            // 获得匹配规则的 URL 集合
             List<URL> matchedUrls = getMatchedUrls(urls, subscribeUrl);
             logger.debug("subscribe url: " + subscribeUrl + ", override urls: " + matchedUrls);
             // No matching results
@@ -402,8 +409,10 @@ public class RegistryProtocol implements Protocol {
                 return;
             }
 
+            // 将配置规则 URL 集合，转换成对应的 Configurator 集合
             List<Configurator> configurators = RegistryDirectory.toConfigurators(matchedUrls);
 
+            // 获得真实的 Invoker 对象
             final Invoker<?> invoker;
             if (originInvoker instanceof InvokerDelegete) {
                 invoker = ((InvokerDelegete<?>) originInvoker).getInvoker();
@@ -411,6 +420,7 @@ public class RegistryProtocol implements Protocol {
                 invoker = originInvoker;
             }
             //The origin invoker
+            // 获得真实 invoker 的 url 对象
             URL originUrl = RegistryProtocol.this.getProviderUrl(invoker);
             String key = getCacheKey(originInvoker);
             ExporterChangeableWrapper<?> exporter = bounds.get(key);
@@ -419,9 +429,12 @@ public class RegistryProtocol implements Protocol {
                 return;
             }
             //The current, may have been merged many times
+            // 获得 Invoker 当前的 URL 对象，可能已经被之前的配置合并过
             URL currentUrl = exporter.getInvoker().getUrl();
             //Merged with this configuration
+            // 基于 originUrl 对象合并配置规则，生成新的 newUrl 对象
             URL newUrl = getConfigedInvokerUrl(configurators, originUrl);
+            // 判断新老 Url 不匹配，重新爆漏 Invoker
             if (!currentUrl.equals(newUrl)) {
                 RegistryProtocol.this.doChangeLocalExport(originInvoker, newUrl);
                 logger.info("exported provider url changed, origin url: " + originUrl + ", old export url: " + currentUrl + ", new export url: " + newUrl);
@@ -438,6 +451,7 @@ public class RegistryProtocol implements Protocol {
                     overrideUrl = url.addParameter(Constants.CATEGORY_KEY, Constants.CONFIGURATORS_CATEGORY);
                 }
 
+                // 判断是否匹配
                 // Check whether url is to be applied to the current service
                 if (UrlUtils.isMatch(currentSubscribe, overrideUrl)) {
                     result.add(url);

@@ -148,23 +148,28 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
      * @return
      */
     public static List<Configurator> toConfigurators(List<URL> urls) {
+        // 配置规则 URL 集合为空
         if (urls == null || urls.isEmpty()) {
             return Collections.emptyList();
         }
 
         List<Configurator> configurators = new ArrayList<Configurator>(urls.size());
         for (URL url : urls) {
+            // 若协议为 empty://，以为这清空所有配置规则，因此返回 Configurator 集合
             if (Constants.EMPTY_PROTOCOL.equals(url.getProtocol())) {
                 configurators.clear();
                 break;
             }
+            // 对应第 4 条，不带有参数的 Override://0.0.0.0/ 标识清楚 override
             Map<String, String> override = new HashMap<String, String>(url.getParameters());
             //The anyhost parameter of override may be added automatically, it can't change the judgement of changing url
+            // override 上的 anyhost 可能是自动添加的，不能影响改变 URL 判断
             override.remove(Constants.ANYHOST_KEY);
             if (override.size() == 0) {
                 configurators.clear();
                 continue;
             }
+            // 获得 Configurator 对象并添加到 configurators 中
             configurators.add(configuratorFactory.getConfigurator(url));
         }
         Collections.sort(configurators);

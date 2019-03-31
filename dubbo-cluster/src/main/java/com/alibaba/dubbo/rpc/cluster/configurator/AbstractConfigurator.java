@@ -27,7 +27,7 @@ import java.util.Set;
 
 /**
  * AbstractOverrideConfigurator
- *
+ * 实现公用的配置规则的匹配、排序的逻辑
  */
 public abstract class AbstractConfigurator implements Configurator {
 
@@ -56,16 +56,23 @@ public abstract class AbstractConfigurator implements Configurator {
             return url;
         }
         // If override url has port, means it is a provider address. We want to control a specific provider with this override url, it may take effect on the specific provider instance or on consumers holding this provider instance.
+        // 配置规则，URL 带有端口（port），意图是控制提供者及其，可以在提供端生效，可以在消费端生效
         if (configuratorUrl.getPort() != 0) {
             if (url.getPort() == configuratorUrl.getPort()) {
                 return configureIfMatch(url.getHost(), url);
             }
-        } else {// override url don't have a port, means the ip override url specify is a consumer address or 0.0.0.0
+        } else {
+            // override url don't have a port, means the ip override url specify is a consumer address or 0.0.0.0
             // 1.If it is a consumer ip address, the intention is to control a specific consumer instance, it must takes effect at the consumer side, any provider received this override url should ignore;
             // 2.If the ip is 0.0.0.0, this override url can be used on consumer, and also can be used on provider
+            // 如果是消费端地址，则意图是控制消费者及其，必定在消费端生效，提供端忽略
+            // 如果是 0.0.0.0 可能是控制提供端，也可能是控制提供端
             if (url.getParameter(Constants.SIDE_KEY, Constants.PROVIDER).equals(Constants.CONSUMER)) {
+                // NetUtils.getLocalHost() 是消费端注册到 zk 的消费地址
                 return configureIfMatch(NetUtils.getLocalHost(), url);// NetUtils.getLocalHost is the ip address consumer registered to registry.
-            } else if (url.getParameter(Constants.SIDE_KEY, Constants.CONSUMER).equals(Constants.PROVIDER)) {
+            }
+            else if (url.getParameter(Constants.SIDE_KEY, Constants.CONSUMER).equals(Constants.PROVIDER)) {
+                // 控制所有提供端，地址必定是 0.0.0.0 否则就需要配短裤从而执行上面的 if 分支了
                 return configureIfMatch(Constants.ANYHOST_VALUE, url);// take effect on all providers, so address must be 0.0.0.0, otherwise it won't flow to this if branch
             }
         }
