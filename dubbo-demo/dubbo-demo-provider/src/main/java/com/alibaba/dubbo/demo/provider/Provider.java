@@ -49,6 +49,7 @@ public class Provider {
         ServiceConfig<DemoServiceImpl> service = new ServiceConfig<DemoServiceImpl>();
         service.setApplication(new ApplicationConfig("dubbo-demo-api-provider"));
         service.setRegistry(new RegistryConfig("zookeeper://127.0.0.1:2181"));
+        service.setAccesslog("D:\\data\\log\\dubbo.log");
         service.setInterface(DemoService.class);
         service.setRef(new DemoServiceImpl());
         service.export();
