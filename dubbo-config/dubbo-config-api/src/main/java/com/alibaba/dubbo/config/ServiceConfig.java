@@ -461,9 +461,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         }
         // token，令牌验证
         if (!ConfigUtils.isEmpty(token)) {
+            // true or default
             if (ConfigUtils.isDefault(token)) {
+                // 随机
                 map.put(Constants.TOKEN_KEY, UUID.randomUUID().toString());
             } else {
+                // 自定义值
                 map.put(Constants.TOKEN_KEY, token);
             }
         }

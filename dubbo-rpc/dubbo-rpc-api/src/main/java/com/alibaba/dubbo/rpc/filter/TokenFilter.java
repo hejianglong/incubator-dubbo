@@ -37,15 +37,21 @@ public class TokenFilter implements Filter {
     @Override
     public Result invoke(Invoker<?> invoker, Invocation inv)
             throws RpcException {
+        // 获得服务提供者配置的 Token 值
         String token = invoker.getUrl().getParameter(Constants.TOKEN_KEY);
         if (ConfigUtils.isNotEmpty(token)) {
+            // 获得服务类型
             Class<?> serviceType = invoker.getInterface();
+            // 获得隐式参数
             Map<String, String> attachments = inv.getAttachments();
+            // 获得 Token
             String remoteToken = attachments == null ? null : attachments.get(Constants.TOKEN_KEY);
+            // 若 token 不一致
             if (!token.equals(remoteToken)) {
                 throw new RpcException("Invalid token! Forbid invoke remote service " + serviceType + " method " + inv.getMethodName() + "() from consumer " + RpcContext.getContext().getRemoteHost() + " to provider " + RpcContext.getContext().getLocalHost());
             }
         }
+        // 服务调用
         return invoker.invoke(inv);
     }
 

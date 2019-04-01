@@ -30,5 +30,8 @@
     <!-- use dubbo protocol to export service on port 20880 -->
     <dubbo:protocol name="dubbo" port="20880" accesslog="true"/>
 
+    <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" token="true" />
+
+    <bean id="demoService" class="com.alibaba.dubbo.demo.provider.DemoServiceImpl" />
 
 </beans>
