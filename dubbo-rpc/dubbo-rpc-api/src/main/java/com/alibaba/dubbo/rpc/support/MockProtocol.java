@@ -24,6 +24,7 @@ import com.alibaba.dubbo.rpc.protocol.AbstractProtocol;
 
 /**
  * MockProtocol is used for generating a mock invoker by URL and type on consumer side
+ * 通过类型为 mock 的 URL 引用创建 MockInvoker 对象
  */
 final public class MockProtocol extends AbstractProtocol {
 
@@ -32,11 +33,28 @@ final public class MockProtocol extends AbstractProtocol {
         return 0;
     }
 
+    /**
+     * 不允许被调用，抛出异常
+     * @param invoker Service invoker
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * 创建 MockInvoker 对象，一般情况下，我们可以通过 dubbo-admin 运维平台或者直接向
+     * Zookeeper 写入静态 URL
+     * 因为非静态 URL 可能会被注册中心删除
+     * @param type Service class
+     * @param url  URL address for the remote service
+     * @param <T>
+     * @return
+     * @throws RpcException
+     */
     @Override
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         return new MockInvoker<T>(url);

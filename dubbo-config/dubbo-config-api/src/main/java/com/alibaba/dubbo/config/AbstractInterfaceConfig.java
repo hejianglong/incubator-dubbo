@@ -45,7 +45,7 @@ import java.util.Map;
 
 /**
  * AbstractDefaultConfig
- *
+ * 校验 Stub 和 Mock 相关配置
  * @export
  */
 public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
