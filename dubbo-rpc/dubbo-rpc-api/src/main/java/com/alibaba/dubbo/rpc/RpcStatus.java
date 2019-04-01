@@ -34,23 +34,35 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class RpcStatus {
 
+    // 基于服务 URL 为维度的 RpcStatus 集合
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
 
+    // 基于服务 URL + 方法维度的 RpcStatus
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();
     private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
+    // 调用中的次数
     private final AtomicInteger active = new AtomicInteger();
+    // 总调用次数
     private final AtomicLong total = new AtomicLong();
+    // 调用失败次数
     private final AtomicInteger failed = new AtomicInteger();
+    // 总调用时长，单位：毫秒
     private final AtomicLong totalElapsed = new AtomicLong();
+    // 总调用失败时长，单位：毫秒
     private final AtomicLong failedElapsed = new AtomicLong();
+    // 最大调用时长，单位：毫秒
     private final AtomicLong maxElapsed = new AtomicLong();
+    // 最大调用失败时长，单位：毫秒
     private final AtomicLong failedMaxElapsed = new AtomicLong();
+    // 最大调用成时长，单位：毫秒
     private final AtomicLong succeededMaxElapsed = new AtomicLong();
 
     /**
      * Semaphore used to control concurrency limit set by `executes`
+     * 服务之星信号量
      */
     private volatile Semaphore executesLimit;
+    // 服务之星信号量的大小
     private volatile int executesPermits;
 
     private RpcStatus() {
@@ -110,10 +122,13 @@ public class RpcStatus {
     }
 
     /**
+     * 服务调用开始的计数
      * @param url
      */
     public static void beginCount(URL url, String methodName) {
+        // URL 调用计数
         beginCount(getStatus(url));
+        // 方法调用计数
         beginCount(getStatus(url, methodName));
     }
 
@@ -127,7 +142,9 @@ public class RpcStatus {
      * @param succeeded
      */
     public static void endCount(URL url, String methodName, long elapsed, boolean succeeded) {
+        // 结束 url 统计
         endCount(getStatus(url), elapsed, succeeded);
+        // 结束 url 方法统计
         endCount(getStatus(url, methodName), elapsed, succeeded);
     }
 
@@ -323,6 +340,7 @@ public class RpcStatus {
             return null;
         }
 
+        // 如果信号量不存在，或者信号量大小改变，创建新的信号量
         if (executesLimit == null || executesPermits != maxThreadNum) {
             synchronized (this) {
                 if (executesLimit == null || executesPermits != maxThreadNum) {
