@@ -55,4 +55,20 @@ public class Consumer {
         DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
         String hello = demoService.sayHello("world"); // call remote method*/
     }
+
+    private static void testConsumer2() {
+        ApplicationConfig application = new ApplicationConfig();
+        application.setName("consumer");
+
+        RegistryConfig registryConfig = new RegistryConfig();
+        registryConfig.setAddress("zookeeper://127.0.0.1:2181");
+
+        ReferenceConfig<DemoService> reference = new ReferenceConfig<DemoService>();
+        reference.setApplication(application);
+        reference.setRegistry(registryConfig);
+        reference.setInterface(DemoService.class);
+
+        DemoService demoService = reference.get();
+        System.out.println(demoService.sayHello("out ..."));
+    }
 }

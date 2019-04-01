@@ -30,6 +30,7 @@ import com.alibaba.dubbo.rpc.RpcResult;
 
 /**
  * ConsumerContextInvokerFilter
+ * 在服务消费者中使用，在发起调用时，初始化 RpcContext
  */
 @Activate(group = Constants.CONSUMER, order = -10000)
 public class ConsumerContextFilter implements Filter {
@@ -50,6 +51,7 @@ public class ConsumerContextFilter implements Filter {
             RpcContext.getServerContext().setAttachments(result.getAttachments());
             return result;
         } finally {
+            // 清理隐式参数集合
             RpcContext.getContext().clearAttachments();
         }
     }

@@ -34,9 +34,11 @@ import java.util.Map;
 @Priority(Integer.MIN_VALUE + 1)
 public class RpcContextFilter implements ContainerRequestFilter, ClientRequestFilter {
 
+    // 传递 Dubbo Attachment 的 Header
     private static final String DUBBO_ATTACHMENT_HEADER = "Dubbo-Attachments";
 
     // currently we use a single header to hold the attachments so that the total attachment size limit is about 8k
+    // 目前我们使用单头文件来保存附件，所以附件的中大小限制在 8K 左右
     private static final int MAX_HEADER_SIZE = 8 * 1024;
 
     @Override
@@ -51,6 +53,7 @@ public class RpcContextFilter implements ContainerRequestFilter, ClientRequestFi
 
         RpcContext.getContext().setResponse(ResteasyProviderFactory.getContextData(HttpServletResponse.class));
 
+        // 解析 Http Header 设置到 RpcContext Attachment
         String headers = requestContext.getHeaderString(DUBBO_ATTACHMENT_HEADER);
         if (headers != null) {
             for (String header : headers.split(",")) {

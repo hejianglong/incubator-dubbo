@@ -62,23 +62,31 @@ public class RpcContext {
         }
     };
 
+    // 隐式参数集合
     private final Map<String, String> attachments = new HashMap<String, String>();
+    // 实际未使用值
     private final Map<String, Object> values = new HashMap<String, Object>();
+    // 异步调用 Future
     private Future<?> future;
-
+    // 可调用服务的 URL 对象集合
     private List<URL> urls;
-
+    // 调用服务的 URL 对象
     private URL url;
 
     private String methodName;
 
+    // 参数类型数组
     private Class<?>[] parameterTypes;
 
+    // 参数值数组
     private Object[] arguments;
 
+    // 服务消费者地址
     private InetSocketAddress localAddress;
 
+    // 服务提供者地址
     private InetSocketAddress remoteAddress;
+
     @Deprecated
     private List<Invoker<?>> invokers;
     @Deprecated
