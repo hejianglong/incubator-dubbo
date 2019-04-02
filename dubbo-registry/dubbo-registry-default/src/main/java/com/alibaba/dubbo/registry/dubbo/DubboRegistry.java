@@ -123,6 +123,7 @@ public class DubboRegistry extends FailbackRegistry {
 
     @Override
     public void destroy() {
+        // 调用父类 取消注册和订阅
         super.destroy();
         try {
             // Cancel the reconnection timer

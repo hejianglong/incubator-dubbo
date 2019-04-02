@@ -440,12 +440,15 @@ public abstract class FailbackRegistry extends AbstractRegistry {
 
     @Override
     public void destroy() {
+        // 取消注册和订阅
         super.destroy();
         try {
+            // 销毁重试的定时任务
             retryFuture.cancel(true);
         } catch (Throwable t) {
             logger.warn(t.getMessage(), t);
         }
+        // 优雅关闭定时任务所用的线程池
         ExecutorUtil.gracefulShutdown(retryExecutor, retryPeriod);
     }
 

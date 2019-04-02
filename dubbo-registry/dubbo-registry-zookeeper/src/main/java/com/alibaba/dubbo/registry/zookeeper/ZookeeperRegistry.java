@@ -100,8 +100,10 @@ public class ZookeeperRegistry extends FailbackRegistry {
 
     @Override
     public void destroy() {
+        // 调用父类方法，取消注册和订阅
         super.destroy();
         try {
+            // 关闭 zk 客户端
             zkClient.close();
         } catch (Exception e) {
             logger.warn("Failed to close zookeeper client " + getUrl() + ", cause: " + e.getMessage(), e);
