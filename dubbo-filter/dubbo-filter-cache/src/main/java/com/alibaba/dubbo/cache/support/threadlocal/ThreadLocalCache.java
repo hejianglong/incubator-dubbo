@@ -24,6 +24,7 @@ import java.util.Map;
 
 /**
  * ThreadLocalCache
+ * 目前没有过期清理机制
  */
 public class ThreadLocalCache implements Cache {
 

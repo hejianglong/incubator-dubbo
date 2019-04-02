@@ -37,11 +37,14 @@ public class JCache implements com.alibaba.dubbo.cache.Cache {
     private final Cache<Object, Object> store;
 
     public JCache(URL url) {
+        // 获得 Cache Key
         String method = url.getParameter(Constants.METHOD_KEY, "");
         String key = url.getAddress() + "." + url.getServiceKey() + "." + method;
         // jcache parameter is the full-qualified class name of SPI implementation
+        // jscache 配置项，为 java spi 实现的权限类名
         String type = url.getParameter("jcache");
 
+        // 基于类型，获得 CachingProvider 对象
         CachingProvider provider = type == null || type.length() == 0 ? Caching.getCachingProvider() : Caching.getCachingProvider(type);
         CacheManager cacheManager = provider.getCacheManager();
         Cache<Object, Object> cache = cacheManager.getCache(key);
@@ -51,6 +54,7 @@ public class JCache implements com.alibaba.dubbo.cache.Cache {
                 MutableConfiguration config =
                         new MutableConfiguration<Object, Object>()
                                 .setTypes(Object.class, Object.class)
+                                // 过期策略，按照写入时间过期，通过 cache.write.expire 配置过期时间，默认 1 分钟
                                 .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.MILLISECONDS, url.getMethodParameter(method, "cache.write.expire", 60 * 1000))))
                                 .setStoreByValue(false)
                                 .setManagementEnabled(true)
@@ -58,6 +62,7 @@ public class JCache implements com.alibaba.dubbo.cache.Cache {
                 cache = cacheManager.createCache(key, config);
             } catch (CacheException e) {
                 // concurrent cache initialization
+                // 初始化 cache 的并发情况
                 cache = cacheManager.getCache(key);
             }
         }

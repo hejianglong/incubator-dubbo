@@ -408,6 +408,13 @@ public final class StringUtils {
         return buf == null ? camelName : buf.toString();
     }
 
+    /**
+     * 将参数数组拼接成字符串
+     * 使用逗号分隔
+     * 使用 JSON 格式化对象
+     * @param args
+     * @return
+     */
     public static String toArgumentString(Object[] args) {
         StringBuilder buf = new StringBuilder();
         for (Object arg : args) {

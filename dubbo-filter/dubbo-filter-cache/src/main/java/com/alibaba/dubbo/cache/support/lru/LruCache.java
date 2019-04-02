@@ -24,12 +24,15 @@ import java.util.Map;
 
 /**
  * LruCache
+ * lru 基于最少使用原则，保持最热的数据被缓存
  */
 public class LruCache implements Cache {
 
+    // 缓存集合
     private final Map<Object, Object> store;
 
     public LruCache(URL url) {
+        // 获得缓存大小配置项，默认为 1000
         final int max = url.getParameter("cache.size", 1000);
         this.store = new LRUCache<Object, Object>(max);
     }

@@ -39,6 +39,11 @@ public class LRUCache<K, V> extends LinkedHashMap<K, V> {
         this.maxCapacity = maxCapacity;
     }
 
+    /**
+     * 重写 removeEldestEntry  方法返回 true 值，指定插入元素时移除最老的元素
+     * @param eldest
+     * @return
+     */
     @Override
     protected boolean removeEldestEntry(java.util.Map.Entry<K, V> eldest) {
         return size() > maxCapacity;

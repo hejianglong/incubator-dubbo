@@ -31,6 +31,7 @@ import com.alibaba.dubbo.rpc.RpcResult;
 
 /**
  * CacheFilter
+ * 用于服务消费者和提供者中，提供结果缓存的功能
  */
 @Activate(group = {Constants.CONSUMER, Constants.PROVIDER}, value = Constants.CACHE_KEY)
 public class CacheFilter implements Filter {
@@ -43,14 +44,20 @@ public class CacheFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 配置了缓存以及 cacheFactory 不为 nul
         if (cacheFactory != null && ConfigUtils.isNotEmpty(invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.CACHE_KEY))) {
+            // 基于 URL + Method 为唯独，获得 Cache 对象
             Cache cache = cacheFactory.getCache(invoker.getUrl(), invocation);
+            // 找到了缓存
             if (cache != null) {
+                // 某个具体方法参数拼接为 key
                 String key = StringUtils.toArgumentString(invocation.getArguments());
                 Object value = cache.get(key);
+                // 获得缓存结果直接返回
                 if (value != null) {
                     return new RpcResult(value);
                 }
+                // 如果调用成功，并且返回值不为 Null，将结果纳入缓存
                 Result result = invoker.invoke(invocation);
                 if (!result.hasException() && result.getValue() != null) {
                     cache.put(key, result.getValue());

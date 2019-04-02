@@ -34,9 +34,11 @@ public abstract class AbstractCacheFactory implements CacheFactory {
 
     @Override
     public Cache getCache(URL url, Invocation invocation) {
+        // 将 url 与方法拼接作为 key
         url = url.addParameter(Constants.METHOD_KEY, invocation.getMethodName());
         String key = url.toFullString();
         Cache cache = caches.get(key);
+        // 如果没有则创建一个
         if (cache == null) {
             caches.put(key, createCache(url));
             cache = caches.get(key);
