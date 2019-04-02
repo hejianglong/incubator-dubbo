@@ -30,10 +30,13 @@ public class DefaultTPSLimiter implements TPSLimiter {
 
     @Override
     public boolean isAllowable(URL url, Invocation invocation) {
+        // 获得 tps 大小配置
         int rate = url.getParameter(Constants.TPS_LIMIT_RATE_KEY, -1);
+        // 获得 tps 周期配置项，默认 60 秒
         long interval = url.getParameter(Constants.TPS_LIMIT_INTERVAL_KEY,
                 Constants.DEFAULT_TPS_LIMIT_INTERVAL);
         String serviceKey = url.getServiceKey();
+        // 配置了限流
         if (rate > 0) {
             StatItem statItem = stats.get(serviceKey);
             if (statItem == null) {
@@ -41,6 +44,7 @@ public class DefaultTPSLimiter implements TPSLimiter {
                         new StatItem(serviceKey, rate, interval));
                 statItem = stats.get(serviceKey);
             }
+            // 根据 Tps 规则判断是否允许此次调用
             return statItem.isAllowable();
         } else {
             StatItem statItem = stats.get(serviceKey);

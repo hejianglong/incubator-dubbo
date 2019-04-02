@@ -31,6 +31,7 @@ import java.util.Set;
 
 /**
  * DeprecatedInvokerFilter
+ * 当调用废弃的服务方法的时候，打印错误日志
  */
 @Activate(group = Constants.CONSUMER, value = Constants.DEPRECATED_KEY)
 public class DeprecatedFilter implements Filter {
@@ -41,7 +42,9 @@ public class DeprecatedFilter implements Filter {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 获得方法名称
         String key = invoker.getInterface().getName() + "." + invocation.getMethodName();
+        // 一个废弃的方法，仅打印一次错误日志
         if (!logged.contains(key)) {
             logged.add(key);
             if (invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.DEPRECATED_KEY, false)) {
