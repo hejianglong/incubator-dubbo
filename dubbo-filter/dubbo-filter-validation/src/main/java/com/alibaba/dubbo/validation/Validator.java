@@ -21,6 +21,13 @@ package com.alibaba.dubbo.validation;
  */
 public interface Validator {
 
+    /**
+     * 方法参数验证
+     * @param methodName
+     * @param parameterTypes
+     * @param arguments
+     * @throws Exception
+     */
     void validate(String methodName, Class<?>[] parameterTypes, Object[] arguments) throws Exception;
 
 }

@@ -32,8 +32,10 @@ public abstract class AbstractValidation implements Validation {
 
     @Override
     public Validator getValidator(URL url) {
+        // 从缓存中的 validators 获取
         String key = url.toFullString();
         Validator validator = validators.get(key);
+        // 不存在则创建
         if (validator == null) {
             validators.put(key, createValidator(url));
             validator = validators.get(key);
