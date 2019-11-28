@@ -50,12 +50,14 @@ public class ExecutorUtil {
      * @param timeout the timeout in milliseconds before termination
      */
     public static void gracefulShutdown(Executor executor, int timeout) {
+        // 若不是 ExecutorService 或者已经关闭，忽略
         if (!(executor instanceof ExecutorService) || isTerminated(executor)) {
             return;
         }
         final ExecutorService es = (ExecutorService) executor;
         try {
             // Disable new tasks from being submitted
+            // 关闭，禁止新的任务提交，原有任务执行完
             es.shutdown();
         } catch (SecurityException ex2) {
             return;
@@ -63,14 +65,17 @@ public class ExecutorUtil {
             return;
         }
         try {
+            // 等待原有任务执行完，若等待超时，强制结束所有任务
             // Wait a while for existing tasks to terminate
             if (!es.awaitTermination(timeout, TimeUnit.MILLISECONDS)) {
                 es.shutdownNow();
             }
         } catch (InterruptedException ex) {
+            // 发生异常也强制结束所有任务
             es.shutdownNow();
             Thread.currentThread().interrupt();
         }
+        // 若为关闭成功，新开线程关闭
         if (!isTerminated(es)) {
             newThreadToCloseExecutor(es);
         }
@@ -82,6 +87,7 @@ public class ExecutorUtil {
         }
         final ExecutorService es = (ExecutorService) executor;
         try {
+            // 立即关闭，原有任务也不等待执行完成
             es.shutdownNow();
         } catch (SecurityException ex2) {
             return;
@@ -89,10 +95,12 @@ public class ExecutorUtil {
             return;
         }
         try {
+            // 等待原有任务呗打断完成
             es.awaitTermination(timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
         }
+        // 若未关闭成功，新开线程关闭
         if (!isTerminated(es)) {
             newThreadToCloseExecutor(es);
         }
@@ -104,8 +112,11 @@ public class ExecutorUtil {
                 @Override
                 public void run() {
                     try {
+                        // 循环 1000 次，不断强制结束线程池
                         for (int i = 0; i < 1000; i++) {
+                            // 立刻结束
                             es.shutdownNow();
+                            // 等待原有任务呗打断完成
                             if (es.awaitTermination(10, TimeUnit.MILLISECONDS)) {
                                 break;
                             }
