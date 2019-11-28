@@ -148,6 +148,7 @@ public abstract class AbstractConfig implements Serializable {
                         }
                     }
                     if (value != null && value.length() > 0) {
+                        // 调用对应的 setter 方法将值设置到 config 对应的属性中
                         method.invoke(config, convertPrimitive(method.getParameterTypes()[0], value));
                     }
                 }

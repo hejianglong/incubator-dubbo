@@ -54,6 +54,7 @@ public class Consumer {
         context.start();
         DemoService demoService = (DemoService) context.getBean("demoService"); // get remote service proxy
         String hello = demoService.sayHello("world"); // call remote method*/
+        System.out.println(hello);
     }
 
     private static void testConsumer2() {
