@@ -22,6 +22,7 @@ import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
 import com.alibaba.dubbo.config.spring.context.annotation.EnableDubbo;
 import com.alibaba.dubbo.demo.DemoService;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -46,7 +47,14 @@ public class Consumer {
                 throwable.printStackTrace();
             }
         }*/
-        testConsumer();
+        //testConsumer();
+        testConsumer3();
+    }
+
+    private static void testConsumer3() {
+        AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(Config.class);
+        TestService testService = (TestService) applicationContext.getBean("testService");
+        testService.tes();
     }
 
     private static void testConsumer() {

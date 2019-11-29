@@ -29,7 +29,7 @@
 
     <!-- use dubbo protocol to export service on port 20880 -->
 <!--    <dubbo:protocol name="dubbo" port="20880" accesslog="true"/>-->
-    <dubbo:protocol name="dubbo" port="20880" accesslog="true" />
+    <dubbo:protocol host="192.168.30.23" name="dubbo" port="20881" accesslog="true" />
 
     <dubbo:service interface="com.alibaba.dubbo.demo.DemoService" ref="demoService" token="true" />
 
